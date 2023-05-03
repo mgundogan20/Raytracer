@@ -2,6 +2,7 @@
 #include <SFML/Graphics/Color.hpp>
 #include <vector>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include "sphere.cpp"
 
@@ -49,22 +50,21 @@ public:
             // If the ray hit an object, calculate the color of the hit point
             if(closestHit.didHit){
                 Material hitMat = closestHit.hitMaterial;
-                accumulatedColor += colorScale(hitMat.emissionColor,hitMat.emissionStrength) * rayColor;
-                rayColor *= hitMat.materialColor;
-                // std::cout << "\n-----------" << bounceCount << "-" << closestHit.hitDistance << "-\n";
-                // std::cout << "emissionColor: " << (int)hitMat.emissionColor.r << "," << (int)hitMat.emissionColor.g << "," << (int)hitMat.emissionColor.b << std::endl;
-                // std::cout << "accumulatedColor: " << (int)accumulatedColor.r << "," << (int)accumulatedColor.g << "," << (int)accumulatedColor.b << std::endl; 
-                // std::cout << "rayColor: " << (int)rayColor.r << "," << (int)rayColor.g << "," << (int)rayColor.b << std::endl;
+                accumulatedColor += colorScale(hitMat.getEmissionColor(),hitMat.getEmissionStrength()) * rayColor;
+                rayColor *= hitMat.getMaterialColor();
             
             }
-            else if(bounceCount == 0){
-                accumulatedColor = sf::Color(0,0,0);
+            else if(rand()%10 == 0){
+                //add a dark blue sky color instead of pure black
+                accumulatedColor += sf::Color(10,10,50) * rayColor;
             }
 
             // Update the ray origin and direction for the next bounce
             rayOrigin = closestHit.hitLocation;
-            rayDir -= (2 * dotProduct(closestHit.hitNormal, rayDir)) * closestHit.hitNormal;
-            rayDir = (float)(1/sqrt(dotProduct(rayDir, rayDir))) * rayDir;
+            // rayDir -= (2 * dotProduct(closestHit.hitNormal, rayDir)) * closestHit.hitNormal;
+            // rayDir = (float)(1/sqrt(dotProduct(rayDir, rayDir))) * rayDir;
+            
+            rayDir = diffusiveRayCalc(closestHit.hitNormal, closestHit.hitMaterial);
             bounceCount++;
         }
 
@@ -103,6 +103,9 @@ private:
         if (determinant >= 0) {
             // Calculate the distance from the ray origin to the hit location
             float distance = -(b + sqrt(determinant)) / (2 * a);
+            if(distance < 0){
+                distance += sqrt(determinant) / a;
+            }
 
             // Check if the hit is in front of the ray origin
             if (distance > 0.1) {
@@ -110,7 +113,7 @@ private:
                 hit.hitLocation = rayOrigin + (distance * rayDirection);
                 hit.hitDistance = distance;
                 hit.hitMaterial = sphere.getSphereMat();
-                hit.hitNormal = (sphere.getPosition() - hit.hitLocation) / sphere.getRadius();
+                hit.hitNormal = (hit.hitLocation - sphere.getPosition()) / sphere.getRadius();
             }
         } else {
             hit.didHit = false;
@@ -118,4 +121,26 @@ private:
 
         return hit;
     }
+
+    sf::Vector3f diffusiveRayCalc(const sf::Vector3f normal, const Material mat) const {
+        // Generate two random numbers between 0-1
+        double phi = 3.14 * (rand() % 100000) / 100000;
+        double theta = 3.14 * (rand() % 100000) / 50000;
+
+        // Generate a random direction vector using the two random numbers
+        sf::Vector3f randDir = sf::Vector3f(
+            sin(phi) * cos(theta),
+            sin(phi) * sin(theta),
+            cos(phi)
+        );
+
+        // If the dot product between the random direction and the normal is negative,
+        // invert the random direction vector to make sure ray reflects away from object
+        if (dotProduct(randDir, normal) < 0) {
+            randDir = (-1.f) * randDir;
+        }
+
+        return randDir;
+    }
+
 };
