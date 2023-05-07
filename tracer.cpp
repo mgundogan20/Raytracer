@@ -21,12 +21,12 @@ public:
     std::vector<Sphere> objects = {};
 
     // Trace a ray through the scene and return the accumulated color
-    const sf::Color trace(const sf::Vector3f& ray) const {
-        sf::Color rayColor = sf::Color(255,255,255);
-        sf::Color accumulatedColor = sf::Color(0,0,0);
+    const sf::Vector3f trace(const sf::Vector3f& ray) const {
+        sf::Vector3f rayColor = sf::Vector3f(255,255,255);
+        sf::Vector3f accumulatedColor = sf::Vector3f(0,0,0);
 
         // Maximum number of times a ray can bounce off objects
-        const int MAX_BOUNCE = 3;
+        const int MAX_BOUNCE = 10;
         sf::Vector3f rayOrigin = sf::Vector3f(0,0,0);
         sf::Vector3f rayDir = ray;
 
@@ -38,6 +38,7 @@ public:
         // or it doesn't hit anything
         while(bounceCount < MAX_BOUNCE && closestHit.hitDistance < INFINITY){
             closestHit.hitDistance = INFINITY;
+            closestHit.didHit = false;
 
             // Check for intersections between the ray and all objects in the scene
             for(Sphere current : objects){
@@ -50,21 +51,25 @@ public:
             // If the ray hit an object, calculate the color of the hit point
             if(closestHit.didHit){
                 Material hitMat = closestHit.hitMaterial;
-                accumulatedColor += colorScale(hitMat.getEmissionColor(),hitMat.getEmissionStrength()) * rayColor;
-                rayColor *= hitMat.getMaterialColor();
+                accumulatedColor = colorAdd(accumulatedColor, colorMult(hitMat.getEmissionStrength()*hitMat.getEmissionColor(), rayColor));
+                rayColor = colorMult(rayColor, hitMat.getMaterialColor());
             
             }
-            else if(rand()%10 == 0){
-                //add a dark blue sky color instead of pure black
-                accumulatedColor += sf::Color(10,10,50) * rayColor;
+            else{ 
+                accumulatedColor = colorAdd(accumulatedColor, colorMult(sf::Vector3f(4*(dotProduct(3.f*rayDir,sf::Vector3f(-1,-1,1))+9),4*(dotProduct(3.f*rayDir,sf::Vector3f(-1,-1,1))+9),7*(dotProduct(3.f*rayDir,sf::Vector3f(-1,-1,1))+9)), rayColor));
+                
+                break;
             }
 
             // Update the ray origin and direction for the next bounce
             rayOrigin = closestHit.hitLocation;
-            // rayDir -= (2 * dotProduct(closestHit.hitNormal, rayDir)) * closestHit.hitNormal;
-            // rayDir = (float)(1/sqrt(dotProduct(rayDir, rayDir))) * rayDir;
+
+            // Specular reflection
+            rayDir -= (2 * dotProduct(closestHit.hitNormal, rayDir)) * closestHit.hitNormal;
+            rayDir = (float)(closestHit.hitMaterial.getReflectionFrac()/sqrt(dotProduct(rayDir, rayDir))) * rayDir;
             
-            rayDir = diffusiveRayCalc(closestHit.hitNormal, closestHit.hitMaterial);
+            // Diffuse reflection
+            rayDir +=  (1-closestHit.hitMaterial.getReflectionFrac()) * diffusiveRayCalc(closestHit.hitNormal, closestHit.hitMaterial);
             bounceCount++;
         }
 
@@ -72,14 +77,19 @@ public:
     }
 
     // Return a reference to the vector of objects in the scene
+    // TODO: Handle this without sending a reference to the actual vector
     std::vector<Sphere>& getObjects() {
         return objects;
     }
 
 private:
-    // Scale a color by a scalar value
-    sf::Color colorScale(const sf::Color color, const float scalar) const {
-        return sf::Color(color.r*scalar, color.g*scalar, color.b*scalar, color.a*scalar);
+    // 
+    sf::Vector3f colorMult(const sf::Vector3f color1, const sf::Vector3f color2) const {
+        return sf::Vector3f(color1.x*color2.x/255, color1.y*color2.y/255, color1.z*color2.z/255);
+    }
+
+    sf::Vector3f colorAdd(const sf::Vector3f color1, const sf::Vector3f color2) const {
+        return sf::Vector3f(std::min(color1.x+color2.x,255.f),std::min(color1.y+color2.y,255.f),std::min(color1.z+color2.z,255.f));
     }
 
     // Calculate the dot product of two vectors
@@ -135,7 +145,7 @@ private:
         );
 
         // If the dot product between the random direction and the normal is negative,
-        // invert the random direction vector to make sure ray reflects away from object
+        // invert the random direction vector to make sure ray reflects AWAY from object
         if (dotProduct(randDir, normal) < 0) {
             randDir = (-1.f) * randDir;
         }

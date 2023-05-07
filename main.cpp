@@ -1,16 +1,17 @@
 #include <SFML/Graphics.hpp>
 #include "tracer.cpp"
 #include <iostream>
-#define RAYS_PER_PIXEL = 5
+#define RAYS_PER_PIXEL 5
 // Forward declaration of the update function
 void update(int width, int height, int depthOfField, sf::RectangleShape& box, Tracer& tracer, sf::RenderWindow& window);
+sf::Vector3f colorAdd(const sf::Vector3f color1, const sf::Vector3f color2);
 
 int main()
 {
     // Set up the window
     const int width = 900;
     const int height = 600;
-    const int depthOfField = 300;
+    const int depthOfField = 500;
     sf::RenderWindow window(sf::VideoMode(width, height), "Mevlut's RTX");
 
     // Set up the rectangle
@@ -19,36 +20,43 @@ int main()
 
     // Set up the tracer and materials
     Tracer tracer;
-    Material greyMaterial(sf::Color(200,200,40), sf::Color::White, 0);
-    Material sunMaterial(sf::Color::Black, sf::Color::White, 1);
-    Material greenMaterial(sf::Color(30,200,30), sf::Color::White, 0);
-    Material blueMaterial(sf::Color(30,30,200), sf::Color::White, 0);
+    Material sunMaterial(sf::Vector3f(255,160,40), sf::Vector3f(255,255,255), 0, 0.9);
+    Material yellowMaterial(sf::Vector3f(200,200,40), sf::Vector3f(255,255,255), 0, 1);
+    Material greenMaterial(sf::Vector3f(30,200,30), sf::Vector3f(255,255,255), 0, 0.9);
+    Material blueMaterial(sf::Vector3f(30,30,200), sf::Vector3f(255,255,255), 0, 0);
+    Material greyMaterial(sf::Vector3f(200,200,200), sf::Vector3f(255,255,255), 0, 0);
+    Material lampMaterial(sf::Vector3f(0,0,0), sf::Vector3f(255,255,255), 5, 0);
 
     // Set up the spheres and add them to the tracer
-    Sphere MySphere(sf::Vector3f(-80, 0, 300), 45, greyMaterial, "white");
     Sphere sun(sf::Vector3f(-200, -200, 200), 150, sunMaterial, "sun");
-    Sphere MySphere3(sf::Vector3f(80, 0, 300), 90, greenMaterial, "green");
+    Sphere MySphere(sf::Vector3f(-80, 0, 300), 80, yellowMaterial, "yellow");
+    Sphere MySphere3(sf::Vector3f(80, 0, 300), 80, greenMaterial, "green");
     Sphere MySphere4(sf::Vector3f(0, 1000, 300), 950, blueMaterial, "ground");
+    Sphere background(sf::Vector3f(0, 0, 20000), 19500, greyMaterial, "background");
+    Sphere lamp(sf::Vector3f(0, 40, 250), 10, lampMaterial, "lamp");
     tracer.getObjects().push_back(MySphere);
     tracer.getObjects().push_back(sun);
     tracer.getObjects().push_back(MySphere3);
     tracer.getObjects().push_back(MySphere4);
+    tracer.getObjects().push_back(background);
+    tracer.getObjects().push_back(lamp);
 
     // Call the update function to render the frame
     update(width, height, depthOfField, box, tracer, window);
     std::cout << "done\n";
     window.display();
 
+    // Create and save an image when the rendering is done
     sf::Vector2u windowSize = window.getSize();
     sf::Texture texture;
     texture.create(windowSize.x, windowSize.y);
     texture.update(window);
     sf::Image screenshot = texture.copyToImage();
-    
     if (screenshot.saveToFile("./output.png"))
     {
-        std::cout << "screenshot saved to " << "output.png" << std::endl;
+        std::cout << "screenshot saved\n";
     }
+
     // Event loop
     while (window.isOpen())
     {
@@ -62,14 +70,10 @@ int main()
             }
         }
 
-
-
-
         // Display the window
         window.display();
-
+    
     }
-
 
     return 0;
 }
@@ -85,26 +89,31 @@ void update(int width, int height, int depthOfField, sf::RectangleShape& box, Tr
     {
         for (int j = 0; j < height; j += 1)
         {
-            // Calculate the direction of the ray
-            ray.x = i - width / 2;
-            ray.y = j - height / 2;
-            ray.z = depthOfField;
-            float rayMag = sqrt(pow(ray.x, 2) + pow(ray.y, 2) + pow(ray.z, 2));
-            ray.x /= rayMag;
-            ray.y /= rayMag;
-            ray.z /= rayMag;
+            // Trace some rays and set the color of the pixel
+            sf::Vector3f color;
+            sf::Vector3f rayOutput;
+            for(int k=0; k<RAYS_PER_PIXEL ;k++){
+                // Calculate the direction of the ray
+                ray.x = i - width/2 + ((rand()%1000)/500.f - 1);
+                ray.y = j - height/2 + ((rand()%1000)/500.f - 1);
+                ray.z = depthOfField;
+                float rayMag = sqrt(pow(ray.x, 2) + pow(ray.y, 2) + pow(ray.z, 2));
+                ray.x /= rayMag;
+                ray.y /= rayMag;
+                ray.z /= rayMag;
 
-            // Trace the ray and set the color of the pixel
-            sf::Color color;
-            sf::Color rayOutput;
-            for(int k=0; k<200 ;k++){
                 rayOutput = tracer.trace(ray);
-                color += sf::Color(rayOutput.r/20, rayOutput.g/20, rayOutput.b/20);
+                color = colorAdd(color, sf::Vector3f(rayOutput.x/RAYS_PER_PIXEL, rayOutput.y/RAYS_PER_PIXEL, rayOutput.z/RAYS_PER_PIXEL));
             }
-            // std::cout << "tracing " << i << "," << j << std::endl;
+            color = colorAdd(color,color);
             box.setPosition(sf::Vector2f(i, j));
-            box.setFillColor(color);
+            box.setFillColor(sf::Color(color.x, color.y, color.z));
             window.draw(box);
         }
     }
+}
+
+
+sf::Vector3f colorAdd(const sf::Vector3f color1, const sf::Vector3f color2) {
+    return sf::Vector3f(std::min(color1.x+color2.x,255.f),std::min(color1.y+color2.y,255.f),std::min(color1.z+color2.z,255.f));
 }
