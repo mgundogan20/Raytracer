@@ -1,5 +1,5 @@
 # **Mevlut's Raytracer**
-This is a personal project that renders photo-realistic 3D scenes using optics.
+This is a personal project that aims to render photo-realistic 3D scenes using optics.
 
 <img src="https://user-images.githubusercontent.com/72755125/236655425-e1d31eb9-d25d-49fb-8bba-a18de69ecf40.png" width="400" height="225"><img src="https://user-images.githubusercontent.com/72755125/236655508-17a7ff00-d34a-415f-83f7-5160caab111d.png" width="337" height="225">
 
