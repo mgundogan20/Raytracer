@@ -1,5 +1,7 @@
-# **Raytracer**
+# **Mevlut's Raytracer**
 This is a personal project that renders photo-realistic 3D scenes using optics.
+
+<img src="https://user-images.githubusercontent.com/72755125/236655425-e1d31eb9-d25d-49fb-8bba-a18de69ecf40.png" width="400" height="225"><img src="https://user-images.githubusercontent.com/72755125/236655508-17a7ff00-d34a-415f-83f7-5160caab111d.png" width="337" height="225">
 
 ## Initial commit: Detecting Spheres, Specular Reflections, Simple Materials
 The initial version of the program traces photon paths with purely specular reflections, ignoring the randomness that should come with diffusive properties of a material. As a result, the images it generates are crisp yet dim, with areas that aren't directly lit by the "sun" receiving almost no light.
@@ -24,3 +26,17 @@ Single photon:
 200 photons:
 
 <img src ="https://user-images.githubusercontent.com/72755125/235988251-7f2f6fc6-5231-4f06-8e3e-e13432428bab.png" width="600" height="400">
+
+## Multisampling and better reflections
+### Noise reduction by multisampling
+The raytracer now samples many randomly offset rays for each pixel. This results in smoother edges and less noise.
+
+<img src="https://user-images.githubusercontent.com/72755125/236655208-9b552787-58da-4c49-9a41-e3da0b55b9c3.png" width="400">
+<img src="https://user-images.githubusercontent.com/72755125/236655206-6cefc772-3c86-4529-830b-3381d4093b02.png" width="400">
+
+### Combining reflection types
+Unlike previous versions, now the material type determines the behaviour of light bouncing off of it. Depending on the material's properties, an incoming ray might bounce away in varying degrees of diffuse or specular reflection types.
+
+<img src="https://user-images.githubusercontent.com/72755125/236655425-e1d31eb9-d25d-49fb-8bba-a18de69ecf40.png" width="800" height="450">
+<img src="https://user-images.githubusercontent.com/72755125/236655508-17a7ff00-d34a-415f-83f7-5160caab111d.png" width="800" height="533">
+
