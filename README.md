@@ -1,4 +1,4 @@
-# **Mevlut's Raytracer**
+# **mgundogan's Raytracer**
 This is a personal project that aims to render photo-realistic 3D scenes using optics.
 
 <img src="https://user-images.githubusercontent.com/72755125/236655425-e1d31eb9-d25d-49fb-8bba-a18de69ecf40.png" width="400" height="225"><img src="https://user-images.githubusercontent.com/72755125/236655508-17a7ff00-d34a-415f-83f7-5160caab111d.png" width="337" height="225">
@@ -17,13 +17,13 @@ However, this randomness also introduces noise into the image. To overcome this,
 
 At this point, the raytracer can still only detect spheres, but it can now simulate both specular and diffuse reflections. With these capabilities, it can generate images that are a significant improvement over the initial version.
 
-Single photon:
+Single photon per pixel:
 
 <img src ="https://user-images.githubusercontent.com/72755125/235988216-dc44428c-1791-4fbd-a155-5ddb23f35492.png" width="600" height="400">
-100 photons:
+100 photons per pixel:
 
 <img src ="https://user-images.githubusercontent.com/72755125/235988237-7d0a15ba-03a7-41ca-b94e-578e84e24c53.png" width="600" height="400">
-200 photons:
+200 photons per pixel:
 
 <img src ="https://user-images.githubusercontent.com/72755125/235988251-7f2f6fc6-5231-4f06-8e3e-e13432428bab.png" width="600" height="400">
 
